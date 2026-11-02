@@ -1,0 +1,19 @@
+{
+  "name": "Loom",
+  "tagline": "Loom's social-app UI for any app: feeds, posts, threads, profiles, communities and compose, from the app's own types.",
+  "category": "developer",
+  "keywords": [
+    "swiftui",
+    "social",
+    "feed",
+    "comments",
+    "lemmy",
+    "mastodon",
+    "granite",
+    "loom"
+  ],
+  "platforms": [
+    "macOS 14"
+  ],
+  "license": "MIT"
+}

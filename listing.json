@@ -1,9 +1,0 @@
-{
-  "name": "Loom",
-  "tagline": "Loom's social-app UI for any app: feeds, posts, threads, profiles, communities and compose, from the app's own types.",
-  "category": "developer",
-  "keywords": ["swiftui", "social", "feed", "comments", "lemmy", "mastodon", "granite", "loom"],
-  "platforms": ["macOS 14"],
-  "license": "MIT",
-  "description": "Loom's social-app UI, written into any app as plain SwiftUI for iOS 17 and macOS 14: a feed with pull to refresh and paging, post cards and pages, threaded comments with indent guides and swipe to reply, profiles, community cards and pickers, compose and reply with a Markdown toolbar and a photo picker, search, keyword filters, a post shared as an image, and Loom's three-pane layout for iPad and the Mac.\n\nSay how the app's own types show with one line a role, `post: Dish title=name author=cook.name score=likes comments=replyCount`; Loom writes the protocols the views read and the conformances that make the app's types them, so the views show the app's values and hand them back through one struct of closures. The views never route and hold no global state.\n\nLoom's look by default (its spacing, its card, its colours for light and dark), or a timeline, or a reader list. No model is asked: the same call makes the same files every time, and nothing is written until every file parses.\n\nOne of the Rao Craft Agents: independent packages that, tagged in prompts along the life of a project, build an app of Loom's quality."
-}
