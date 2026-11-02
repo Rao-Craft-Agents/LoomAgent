@@ -165,6 +165,18 @@ public struct LoomAgent: GraniteAgentPackage {
                 typeNotes.append("`\(mapping.type)` is declared in \(module), so the conformances import it.")
             }
             func checked(_ source: Mapping.Source, _ word: String, kind: SocialKind?) -> Mapping.Source {
+                // In Swift the line wrote, each path that starts at one of the type's fields reads through its optionals
+                // too (`author.id == postID` is `author?.id == postID` when author is `User?`, Margin 2026-11-01).
+                if case .expression(let text) = source {
+                    var out = text
+                    for path in Set(text.matchesOf(#"(?<![\w.$])([a-z_]\w*(?:\.[A-Za-z_]\w*)+)"#)) where declared.field(String(path.split(separator: ".")[0])) != nil {
+                        let (fixed, problem) = app.check(path, from: mapping.type)
+                        if problem == nil, fixed != path {
+                            out = out.replacingOccurrences(of: #"(?<![\w.$])"# + NSRegularExpression.escapedPattern(for: path) + #"(?![\w])"#, with: fixed, options: .regularExpression)
+                        }
+                    }
+                    return .expression(out)
+                }
                 guard case .path(let path) = source else { return source }
                 let (fixed, problem) = app.check(path, from: mapping.type)
                 if let problem { problems.append("\(mapping.role.rawValue) \(word)=\(path): \(problem)"); return source }
@@ -269,5 +281,13 @@ public struct LoomAgent: GraniteAgentPackage {
         note("wrote \(written.count) files")
         return LoomResult(path: written.first, paths: written, views: views.map { prefix + $0 },
                           conformances: mappings.map { "\($0.type): \($0.role.rawValue)" }, schema: schema, notes: notes)
+    }
+}
+
+extension String {
+    /// The first capture of every match of `pattern`.
+    func matchesOf(_ pattern: String) -> [String] {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+        return regex.matches(in: self, range: NSRange(startIndex..., in: self)).compactMap { Range($0.range(at: 1), in: self).map { String(self[$0]) } }
     }
 }

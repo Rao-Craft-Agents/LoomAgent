@@ -279,6 +279,9 @@ final class AppTypesTests: XCTestCase {
         let media = try LoomAgent.write(LoomAgent.Input(mappings: ["post: Dish title=name media=photos"], screens: [.feed], directory: folder.path), note: { _ in }, yield: { _ in })
         let withMedia = try String(contentsOf: folder.appendingPathComponent("Shared/Views/Social/Conformances/Dish+Post.swift"), encoding: .utf8)
         XCTAssertTrue(withMedia.contains("photos.map(\\.url)"), withMedia)
+        _ = try LoomAgent.write(LoomAgent.Input(mappings: ["post: Dish title=name mine=helper.displayName==name"], screens: [.feed], directory: folder.path), note: { _ in }, yield: { _ in })
+        let mine = try String(contentsOf: folder.appendingPathComponent("Shared/Views/Social/Conformances/Dish+Post.swift"), encoding: .utf8)
+        XCTAssertTrue(mine.contains("helper?.displayName==name"), "an expression reads through an optional too: \(mine)")
         XCTAssertTrue(media.notes.contains { $0.contains("each Photo's `url` is read as its link") }, "\(media.notes)")
         XCTAssertTrue(result.notes.contains { $0.contains("`created_at` is `createdAt` on Dish") }, "\(result.notes)")
     }
