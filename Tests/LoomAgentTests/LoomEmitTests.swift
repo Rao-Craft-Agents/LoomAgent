@@ -231,6 +231,10 @@ final class AppTypesTests: XCTestCase {
         let sources = folder.appendingPathComponent("Packages/RecipeKit/Sources/RecipeKit")
         try FileManager.default.createDirectory(at: sources, withIntermediateDirectories: true)
         try "// swift-tools-version: 5.9\n".write(to: folder.appendingPathComponent("Packages/RecipeKit/Package.swift"), atomically: true, encoding: .utf8)
+        // A hidden file beside the packages: the walk once skipped a folder on reaching one (Margin, 2026-11-01).
+        try ".build/\n".write(to: folder.appendingPathComponent(".gitignore"), atomically: true, encoding: .utf8)
+        try FileManager.default.createDirectory(at: folder.appendingPathComponent("Components"), withIntermediateDirectories: true)
+        try "// a page\n".write(to: folder.appendingPathComponent("Components/.keep"), atomically: true, encoding: .utf8)
         try """
         import Foundation
 
@@ -240,6 +244,7 @@ final class AppTypesTests: XCTestCase {
             public var createdAt: Date
             public var cook: Cook
             public var replyCount: Int = 0
+            public var helper: Cook?
             public static let preview = 1
 
             public init(id: Int) { self.id = id; name = ""; createdAt = .now; cook = Cook(); }
@@ -260,6 +265,7 @@ final class AppTypesTests: XCTestCase {
         let result = try LoomAgent.write(input, note: { _ in }, yield: { _ in })
         let conformance = try String(contentsOf: folder.appendingPathComponent("Shared/Views/Social/Conformances/Dish+Post.swift"), encoding: .utf8)
         XCTAssertTrue(conformance.contains("import RecipeKit"), conformance)
+        XCTAssertEqual(AppTypes(root: folder).check("helper.displayName", from: "Dish").path, "helper?.displayName", "an optional step reads on with ?.")
         for read in ["self.createdAt", "self.cook.displayName", "self.cook.photoURL", "self.replyCount"] {
             XCTAssertTrue(conformance.contains(read), "\(read) in \(conformance)")
         }
@@ -272,7 +278,7 @@ final class AppTypesTests: XCTestCase {
         let input = LoomAgent.Input(mappings: ["post: Dish title=name score=likes"], screens: [.feed], directory: folder.path)
         XCTAssertThrowsError(try LoomAgent.write(input, note: { _ in }, yield: { _ in })) { error in
             let text = "\(error)"
-            XCTAssertTrue(text.contains("post score=likes: `Dish` has no `likes`: its fields are id, name, createdAt, cook, replyCount"), text)
+            XCTAssertTrue(text.contains("post score=likes: `Dish` has no `likes`: its fields are id, name, createdAt, cook, replyCount, helper"), text)
         }
         XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Shared/Views/Social").path))
     }

@@ -27,7 +27,10 @@ struct AppTypes {
         guard let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.isDirectoryKey]) else { return }
         for case let url as URL in walker {
             let name = url.lastPathComponent
-            if skipped.contains(name) || name.hasPrefix(".") || name.hasSuffix(".xcodeproj") || name.hasSuffix(".xcassets") || name.hasSuffix("Tests") {
+            // Only a folder is skipped: on a file, skipDescendants skips the folder entered last, which hid a whole
+            // package from this reader (Margin, 2026-11-01).
+            let isFolder = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+            if isFolder, skipped.contains(name) || name.hasPrefix(".") || name.hasSuffix(".xcodeproj") || name.hasSuffix(".xcassets") || name.hasSuffix("Tests") {
                 walker.skipDescendants(); continue
             }
             guard url.pathExtension == "swift", let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
@@ -106,7 +109,9 @@ struct AppTypes {
                 let known = current.fields.map(\.name).joined(separator: ", ")
                 return (path, "`\(current.name)` has no `\(step)`" + (known.isEmpty ? "" : ": its fields are \(known)"))
             }
-            out.append(found + optional)
+            // A step through an optional reads on with `?.` (`author?.name` when author is `User?`, Margin 2026-11-01).
+            let throughOptional = optional.isEmpty && index < steps.count - 1 && (current.field(found) ?? "").trimmingCharacters(in: .whitespaces).hasSuffix("?")
+            out.append(found + (throughOptional ? "?" : optional))
             guard let next = types[Self.named(current.field(found) ?? "")] else {
                 out += steps.dropFirst(index + 1)
                 break
