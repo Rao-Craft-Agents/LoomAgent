@@ -245,6 +245,7 @@ final class AppTypesTests: XCTestCase {
             public var cook: Cook
             public var replyCount: Int = 0
             public var helper: Cook?
+            public var photos: [Photo] = []
             public static let preview = 1
 
             public init(id: Int) { self.id = id; name = ""; createdAt = .now; cook = Cook(); }
@@ -253,6 +254,11 @@ final class AppTypesTests: XCTestCase {
         public struct Cook: Codable {
             public var displayName: String = ""
             public var photoURL: URL?
+        }
+
+        public struct Photo: Codable {
+            public var width: Int
+            public var url: URL?
         }
         """.write(to: sources.appendingPathComponent("Dish.swift"), atomically: true, encoding: .utf8)
         return folder
@@ -270,6 +276,10 @@ final class AppTypesTests: XCTestCase {
             XCTAssertTrue(conformance.contains(read), "\(read) in \(conformance)")
         }
         XCTAssertTrue(result.notes.contains("`Dish` is declared in RecipeKit, so the conformances import it."), "\(result.notes)")
+        let media = try LoomAgent.write(LoomAgent.Input(mappings: ["post: Dish title=name media=photos"], screens: [.feed], directory: folder.path), note: { _ in }, yield: { _ in })
+        let withMedia = try String(contentsOf: folder.appendingPathComponent("Shared/Views/Social/Conformances/Dish+Post.swift"), encoding: .utf8)
+        XCTAssertTrue(withMedia.contains("photos.map(\\.url)"), withMedia)
+        XCTAssertTrue(media.notes.contains { $0.contains("each Photo's `url` is read as its link") }, "\(media.notes)")
         XCTAssertTrue(result.notes.contains { $0.contains("`created_at` is `createdAt` on Dish") }, "\(result.notes)")
     }
 
@@ -278,7 +288,7 @@ final class AppTypesTests: XCTestCase {
         let input = LoomAgent.Input(mappings: ["post: Dish title=name score=likes"], screens: [.feed], directory: folder.path)
         XCTAssertThrowsError(try LoomAgent.write(input, note: { _ in }, yield: { _ in })) { error in
             let text = "\(error)"
-            XCTAssertTrue(text.contains("post score=likes: `Dish` has no `likes`: its fields are id, name, createdAt, cook, replyCount, helper"), text)
+            XCTAssertTrue(text.contains("post score=likes: `Dish` has no `likes`: its fields are id, name, createdAt, cook, replyCount, helper, photos"), text)
         }
         XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Shared/Views/Social").path))
     }

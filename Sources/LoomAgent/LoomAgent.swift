@@ -164,15 +164,25 @@ public struct LoomAgent: GraniteAgentPackage {
                 imports.append(module)
                 typeNotes.append("`\(mapping.type)` is declared in \(module), so the conformances import it.")
             }
-            func checked(_ source: Mapping.Source, _ word: String) -> Mapping.Source {
+            func checked(_ source: Mapping.Source, _ word: String, kind: SocialKind?) -> Mapping.Source {
                 guard case .path(let path) = source else { return source }
                 let (fixed, problem) = app.check(path, from: mapping.type)
                 if let problem { problems.append("\(mapping.role.rawValue) \(word)=\(path): \(problem)"); return source }
                 if fixed != path { typeNotes.append("\(mapping.role.rawValue) \(word): `\(path)` is `\(fixed)` on \(declared.name).") }
+                // A list of the app's own values where links are wanted (`media` as `[MediaAttachment]`, Margin
+                // 2026-11-01): read each one's link, or say which field would be.
+                if kind == .urls, let element = app.listElement(of: fixed, from: mapping.type), let item = app.types[element] {
+                    let links = item.fields.filter { ["URL", "URL?", "String", "String?"].contains($0.type.replacingOccurrences(of: " ", with: "")) }
+                    if let link = links.first(where: { $0.name.lowercased().contains("url") }) ?? (links.count == 1 ? links.first : nil) {
+                        typeNotes.append("\(mapping.role.rawValue) \(word): each \(element)'s `\(link.name)` is read as its link.")
+                        return .expression("value.\(fixed).map(\\.\(link.name))")
+                    }
+                    problems.append("\(mapping.role.rawValue) \(word)=\(path): `\(element)` has no link to show; name the one to read, like `\(word)=value.\(fixed).map(\\.url)`")
+                }
                 return .path(fixed)
             }
-            return Mapping(line: mapping.line, role: mapping.role, type: mapping.type, id: mapping.id.map { checked($0, "id") },
-                           assignments: mapping.assignments.map { Mapping.Assignment(property: $0.property, source: checked($0.source, $0.property.key)) })
+            return Mapping(line: mapping.line, role: mapping.role, type: mapping.type, id: mapping.id.map { checked($0, "id", kind: nil) },
+                           assignments: mapping.assignments.map { Mapping.Assignment(property: $0.property, source: checked($0.source, $0.property.key, kind: $0.property.kind)) })
         }
         let conformanceFiles = ConformanceEmitter.emit(mappings, imports: imports)
         problems += conformanceFiles.problems

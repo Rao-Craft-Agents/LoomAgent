@@ -95,6 +95,24 @@ struct AppTypes {
         return [camel, initialisms].first { type.field($0) != nil }
     }
 
+    /// The element type of the list a path ends on, when it is one of the app's types: `MediaAttachment` for `media`.
+    func listElement(of path: String, from type: String) -> String? {
+        guard var current = types[Self.named(type)] else { return nil }
+        let steps = path.components(separatedBy: ".").map { $0.hasSuffix("?") ? String($0.dropLast()) : $0 }
+        for (index, step) in steps.enumerated() {
+            guard let fieldType = current.field(step) else { return nil }
+            let text = fieldType.replacingOccurrences(of: " ", with: "")
+            if index == steps.count - 1 {
+                guard text.hasPrefix("["), !text.contains(":") else { return nil }
+                let element = Self.named(text)
+                return types[element] == nil ? nil : element
+            }
+            guard let next = types[Self.named(text)] else { return nil }
+            current = next
+        }
+        return nil
+    }
+
     /// A mapping's path, checked against the app's types: each step a field of the type before it, in the type's
     /// spelling. The path as it should be written, and why not, when a step names no field. Steps past a type it does
     /// not know are kept as written.
