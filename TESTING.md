@@ -83,3 +83,35 @@ Give Hearth its social screens with $loom, in Loom's look with the colours from 
 - The mappings read HearthKit's fields as they are spelled there (`created_at`, `comment_count`: HearthKit was made by a network release that kept the API's snake_case).
 - The conformances did not build until the model imported HearthKit into five files: the line gave no `imports`, and loom did not know where Post was declared.
 - Fixed in the next release: loom reads the app's own types, imports a mapped type's local package with a note, writes each path in the type's spelling (`created_at` read as `createdAt` where the type says so), and refuses a field the type does not have, listing the ones it has.
+
+## Conformance on Hearth
+
+Level 1 of the regime: the call a model should write, sent straight to the installed runner over its wire
+(granite-agent/1) with no model, on a copy of Hearth as the journey left it (services, mock data and loom's views
+made), then checked by building, testing and screenshotting the app. A pass here means the agent can produce the
+result deterministically; whether Craft's model writes this call is tested by the prompts above.
+
+### The kit with asset colours, before and after the catalog has them
+
+*2026-11-01 · straight to the runner, no model*
+
+**The call**:
+
+```json
+{
+  "colors": "assets"
+}
+```
+
+**Checks**:
+- Before the colour sets existed, every word drew clear (left out of the catalog): fixed by falling back to the system's colours with a note
+- After `assets` wrote the six colors/… sets, the views read them: warm pages and ink in light and dark
+
+![Asset colours the catalog did not have: avatars and no text](Docs/Testing/l1-l1-feed-light.png)
+*Asset colours the catalog did not have: avatars and no text*
+
+![The system's colours, with the note naming the sets to add](Docs/Testing/l1-l1-feed-light-2.png)
+*The system's colours, with the note naming the sets to add*
+
+![The catalog's colours, written by assets](Docs/Testing/l1-l1-feed-brand.png)
+*The catalog's colours, written by assets*
