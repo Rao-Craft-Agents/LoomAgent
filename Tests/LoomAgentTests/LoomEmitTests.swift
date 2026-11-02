@@ -132,14 +132,30 @@ final class LoomEmitTests: XCTestCase {
         XCTAssertTrue(names(all).isSuperset(of: ["FeedSplitView.swift", "ReportView.swift", "ShareImageView.swift", "InstanceCardView.swift"]))
     }
 
+    /// The colour sets `colors: assets` reads, in a catalog under `folder`.
+    private func catalog(in folder: URL) throws {
+        for name in LoomAgent.colorSets {
+            let set = folder.appendingPathComponent("Shared/Assets.xcassets/colors/\(name).colorset")
+            try FileManager.default.createDirectory(at: set, withIntermediateDirectories: true)
+            try "{}".write(to: set.appendingPathComponent("Contents.json"), atomically: true, encoding: .utf8)
+        }
+    }
+
     func testTheStyleAndColoursChooseTheDefaults() throws {
-        let (reader, _) = try write(.init(style: .reader, colors: .assets, screens: []))
+        let folder = try Fixture.folder()
+        try catalog(in: folder)
+        let reader = try LoomAgent.write(.init(style: .reader, colors: .assets, screens: [], directory: folder.path), note: { _ in }, yield: { _ in })
         let style = try Fixture.text(reader.paths, "SocialStyle.swift")
         XCTAssertTrue(style.contains("static let defaultValue: SocialStyle = .reader"))
         XCTAssertEqual(style.components(separatedBy: "static let defaultValue").count, 2)
         XCTAssertTrue(style.contains("Color(\"colors/background\")"))
         XCTAssertFalse(style.contains("socialDynamic"))
         XCTAssertTrue(reader.notes.contains { $0.contains("colors/background") })
+
+        // Without the sets, asset colours would draw clear: the system's are used, and the note says what to add.
+        let (bare, _) = try write(.init(colors: .assets, screens: []))
+        XCTAssertTrue(try Fixture.text(bare.paths, "SocialStyle.swift").contains("socialDynamic"), "the system's colours")
+        XCTAssertTrue(bare.notes.contains { $0.contains("The asset catalog has no colors/background") }, "\(bare.notes)")
 
         let (loom, _) = try write(.init(screens: []))
         let code = try Fixture.text(loom.paths, "SocialStyle.swift")

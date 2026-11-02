@@ -126,6 +126,22 @@ public struct LoomAgent: GraniteAgentPackage {
         }
     }
 
+    /// The colour sets the views read with `colors: assets` that no asset catalog under `root` holds.
+    static let colorSets = ["background", "alternateBackground", "secondaryBackground", "tertiaryBackground", "foreground", "secondaryForeground"]
+    static func missingColorSets(under root: URL) -> [String] {
+        var found: Set<String> = []
+        if let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil) {
+            for case let url as URL in walker {
+                let name = url.lastPathComponent
+                if [".build", ".git", "DerivedData", "node_modules"].contains(name) { walker.skipDescendants(); continue }
+                if name.hasSuffix(".colorset"), url.deletingLastPathComponent().lastPathComponent == "colors" {
+                    found.insert(String(name.dropLast(".colorset".count)))
+                }
+            }
+        }
+        return colorSets.filter { !found.contains($0) }.map { "colors/\($0)" }
+    }
+
     /// The whole call: the lines read, the kit planned and made, staged, checked and written.
     static func write(_ input: Input, note: @Sendable (String) -> Void, yield: (LoomFrame) -> Void) throws -> LoomResult {
         var problems: [String] = []
@@ -182,7 +198,18 @@ public struct LoomAgent: GraniteAgentPackage {
         for screen in input.screens ?? LoomScreen.allCases where !screens.contains(screen) { screens.append(screen) }
         let plan = KitPlan(features: features, screens: screens, holding: disk.parts)
         let style = input.style ?? disk.style ?? .loom
-        let colors = input.colors ?? disk.colors ?? .code
+        var colors = input.colors ?? disk.colors ?? .code
+        // Colours read from a catalog that lacks them draw clear, and every word goes invisible (Hearth, 2026-11-01):
+        // without the sets, the views keep the system's colours and the note names what to add.
+        var colorNote: String?
+        if colors == .assets {
+            let missing = Self.missingColorSets(under: files.root)
+            if !missing.isEmpty {
+                colors = .code
+                colorNote = "The asset catalog has no \(missing.joined(separator: ", ")), so the views use the system's colours: "
+                    + "add those colour sets (with $assets, or in Xcode) and call loom again with colors: assets."
+            }
+        }
         let flags = plan.flags.union(["style.\(style.rawValue)", "colors.\(colors.rawValue)"])
         yield(.read(mappings: mappings.count, views: plan.views.count))
         note("writing \(plan.views.count) views for \(screens.count) screen\(screens.count == 1 ? "" : "s") into \(files.relative(folder))")
@@ -223,6 +250,7 @@ public struct LoomAgent: GraniteAgentPackage {
         if held > 0 {
             notes.append("\(files.relative(folder)) already held \(held) parts of the kit: they were written again with this call's, so every shared file agrees; keep the app's own changes in its own files.")
         }
+        if let colorNote { notes.append(colorNote) }
         if colors == .assets {
             notes.append("The colours are read from the asset catalog: colors/background, colors/alternateBackground, colors/secondaryBackground, colors/tertiaryBackground, colors/foreground and colors/secondaryForeground.")
         }
