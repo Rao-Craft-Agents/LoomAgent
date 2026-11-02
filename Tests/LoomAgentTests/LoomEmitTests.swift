@@ -206,3 +206,58 @@ final class TemplateRenderTests: XCTestCase {
                        "KitAvatarView(url: u) UserAvatarView MyAvatarViews KitPostCardView<Social>")
     }
 }
+
+/// Mappings checked against the app's own types (Hearth, 2026-11-01: the model mapped HearthKit's types, and the
+/// conformances did not build until it imported HearthKit into five files by hand).
+final class AppTypesTests: XCTestCase {
+    private func kit() throws -> URL {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("loom-apptypes-\(UUID().uuidString)")
+        let sources = folder.appendingPathComponent("Packages/RecipeKit/Sources/RecipeKit")
+        try FileManager.default.createDirectory(at: sources, withIntermediateDirectories: true)
+        try "// swift-tools-version: 5.9\n".write(to: folder.appendingPathComponent("Packages/RecipeKit/Package.swift"), atomically: true, encoding: .utf8)
+        try """
+        import Foundation
+
+        public struct Dish: Codable, Identifiable {
+            public var id: Int
+            public var name: String
+            public var createdAt: Date
+            public var cook: Cook
+            public var replyCount: Int = 0
+            public static let preview = 1
+
+            public init(id: Int) { self.id = id; name = ""; createdAt = .now; cook = Cook(); }
+        }
+
+        public struct Cook: Codable {
+            public var displayName: String = ""
+            public var photoURL: URL?
+        }
+        """.write(to: sources.appendingPathComponent("Dish.swift"), atomically: true, encoding: .utf8)
+        return folder
+    }
+
+    func testPathsAreReadInTheTypesSpellingAndItsPackageIsImported() throws {
+        let folder = try kit()
+        let input = LoomAgent.Input(mappings: ["post: Dish title=name created=created_at author=cook.display_name avatar=cook.photo_url comments=reply_count"],
+                                    screens: [.feed], directory: folder.path)
+        let result = try LoomAgent.write(input, note: { _ in }, yield: { _ in })
+        let conformance = try String(contentsOf: folder.appendingPathComponent("Shared/Views/Social/Conformances/Dish+Post.swift"), encoding: .utf8)
+        XCTAssertTrue(conformance.contains("import RecipeKit"), conformance)
+        for read in ["self.createdAt", "self.cook.displayName", "self.cook.photoURL", "self.replyCount"] {
+            XCTAssertTrue(conformance.contains(read), "\(read) in \(conformance)")
+        }
+        XCTAssertTrue(result.notes.contains("`Dish` is declared in RecipeKit, so the conformances import it."), "\(result.notes)")
+        XCTAssertTrue(result.notes.contains { $0.contains("`created_at` is `createdAt` on Dish") }, "\(result.notes)")
+    }
+
+    func testAFieldTheTypeDoesNotHaveIsRefusedWithItsFields() throws {
+        let folder = try kit()
+        let input = LoomAgent.Input(mappings: ["post: Dish title=name score=likes"], screens: [.feed], directory: folder.path)
+        XCTAssertThrowsError(try LoomAgent.write(input, note: { _ in }, yield: { _ in })) { error in
+            let text = "\(error)"
+            XCTAssertTrue(text.contains("post score=likes: `Dish` has no `likes`: its fields are id, name, createdAt, cook, replyCount"), text)
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Shared/Views/Social").path))
+    }
+}

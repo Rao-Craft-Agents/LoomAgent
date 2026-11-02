@@ -137,10 +137,29 @@ public struct LoomAgent: GraniteAgentPackage {
         for mapping in mappings where !roles.insert(mapping.role).inserted {
             problems.append("\(mapping.role.rawValue) is mapped twice: one type a role, so unify several APIs' types into one first")
         }
-        let imports = (input.imports ?? []).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        var imports = (input.imports ?? []).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        let files = AgentFiles(directory: input.directory)
+        // Each path checked against the app's own types, in their spelling; a type a local package declares imported.
+        let app = AppTypes(root: files.root)
+        var typeNotes: [String] = []
+        mappings = mappings.map { mapping in
+            guard let declared = app.types[AppTypes.named(mapping.type)] else { return mapping }
+            if let module = declared.module, !imports.contains(module), !mapping.type.hasPrefix(module + ".") {
+                imports.append(module)
+                typeNotes.append("`\(mapping.type)` is declared in \(module), so the conformances import it.")
+            }
+            func checked(_ source: Mapping.Source, _ word: String) -> Mapping.Source {
+                guard case .path(let path) = source else { return source }
+                let (fixed, problem) = app.check(path, from: mapping.type)
+                if let problem { problems.append("\(mapping.role.rawValue) \(word)=\(path): \(problem)"); return source }
+                if fixed != path { typeNotes.append("\(mapping.role.rawValue) \(word): `\(path)` is `\(fixed)` on \(declared.name).") }
+                return .path(fixed)
+            }
+            return Mapping(line: mapping.line, role: mapping.role, type: mapping.type, id: mapping.id.map { checked($0, "id") },
+                           assignments: mapping.assignments.map { Mapping.Assignment(property: $0.property, source: checked($0.source, $0.property.key)) })
+        }
         let conformanceFiles = ConformanceEmitter.emit(mappings, imports: imports)
         problems += conformanceFiles.problems
-        let files = AgentFiles(directory: input.directory)
         let folder = files.resolve(input.into ?? "Shared/Views/Social")
         let conformances = folder.appendingPathComponent("Conformances", isDirectory: true)
         // What an earlier call left here: a later call adds to it, so the shared files keep what its views use.
@@ -187,7 +206,7 @@ public struct LoomAgent: GraniteAgentPackage {
         for file in conformanceFiles.files {
             planned.append((conformances.appendingPathComponent(file.name), file.text))
         }
-        var notes: [String] = []
+        var notes: [String] = typeNotes
         var schema: String?
         if schemaTypes.isEmpty {
             notes.append("No type is mapped yet: add `mappings` lines (`post: Dish title=name author=cook.name`) and the views show the app's types through `AppSocial`.")
