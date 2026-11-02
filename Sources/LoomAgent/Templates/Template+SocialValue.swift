@@ -22,6 +22,9 @@ extension Template {
         static func optionalText(_ value: String?) -> String? { value.flatMap { $0.isEmpty ? nil : $0 } }
         static func optionalText<Text: StringProtocol>(_ value: Text?) -> String? { value.flatMap { $0.isEmpty ? nil : String($0) } }
         static func optionalText(_ value: URL?) -> String? { value?.absoluteString }
+        // An id that is a number (Margin's `parent?.id`, an Int).
+        static func optionalText<Number: BinaryInteger>(_ value: Number) -> String? { String(value) }
+        static func optionalText<Number: BinaryInteger>(_ value: Number?) -> String? { value.map { String($0) } }
 
         // MARK: Links
 
