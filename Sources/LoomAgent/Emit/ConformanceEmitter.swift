@@ -97,12 +97,18 @@ enum ConformanceEmitter {
     /// `enum AppSocial: SocialSchema`, one type a role, a stand-in for a role nothing maps.
     static func schema(_ types: [SocialRole: String], imports: [String]) -> String {
         var lines = header(imports)
+        // A type named as its role (`Comment`) would read `typealias Comment = Comment` inside the schema, which names
+        // itself (Margin, 2026-11-01): it is reached through a file-level name instead.
+        let same = SocialRole.allCases.filter { types[$0] == $0.name }
+        for role in same { lines.append("typealias \(schemaName)\(role.name) = \(role.name)") }
+        if !same.isEmpty { lines.append("") }
         lines += [
             "/// The app's types, as the social views know them: `FeedView(posts:actions:)` with `SocialActions<\(schemaName)>`.",
             "enum \(schemaName): SocialSchema {",
         ]
         for role in SocialRole.allCases {
-            lines.append("    typealias \(role.name) = \(types[role] ?? role.absentType)")
+            let type = types[role] ?? role.absentType
+            lines.append("    typealias \(role.name) = \(type == role.name ? schemaName + role.name : type)")
         }
         lines.append("}")
         return lines.joined(separator: "\n") + "\n"

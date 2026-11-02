@@ -277,3 +277,14 @@ final class AppTypesTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Shared/Views/Social").path))
     }
 }
+
+/// A type named as its role is reached through a file-level name, so the schema never names itself (Margin).
+final class SchemaNamesTests: XCTestCase {
+    func testATypeNamedAsItsRoleDoesNotNameItself() {
+        let text = ConformanceEmitter.schema([.post: "Post", .comment: "Comment", .user: "Reader"], imports: [])
+        XCTAssertTrue(text.contains("typealias AppSocialComment = Comment"), text)
+        XCTAssertTrue(text.contains("    typealias Comment = AppSocialComment"), text)
+        XCTAssertTrue(text.contains("    typealias User = Reader"), text)
+        XCTAssertFalse(text.contains("typealias Post = Post"), text)
+    }
+}
