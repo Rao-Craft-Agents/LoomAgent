@@ -286,6 +286,16 @@ final class AppTypesTests: XCTestCase {
         XCTAssertTrue(result.notes.contains { $0.contains("`created_at` is `createdAt` on Dish") }, "\(result.notes)")
     }
 
+    /// The kit's own folder is left out: its previews' stand-ins are not the app's types (Margin, 2026-11-02).
+    func testTheKitsOwnPreviewsAreNotTheAppsTypes() throws {
+        let folder = try kit()
+        let previews = folder.appendingPathComponent("Shared/Views/Social")
+        try FileManager.default.createDirectory(at: previews, withIntermediateDirectories: true)
+        try "struct Dish {\n    var replies: Int\n}\n".write(to: previews.appendingPathComponent("SocialPreviews.swift"), atomically: true, encoding: .utf8)
+        let app = AppTypes(root: folder, excluding: previews)
+        XCTAssertEqual(app.types["Dish"]?.module, "RecipeKit", "the package's Dish, not the kit's stand-in")
+    }
+
     func testAFieldTheTypeDoesNotHaveIsRefusedWithItsFields() throws {
         let folder = try kit()
         let input = LoomAgent.Input(mappings: ["post: Dish title=name score=likes"], screens: [.feed], directory: folder.path)

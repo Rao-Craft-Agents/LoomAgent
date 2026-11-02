@@ -22,11 +22,15 @@ struct AppTypes {
     init() {}
 
     /// Every Swift file under `root`, skipping build products, tests and project bundles.
-    init(root: URL) {
+    /// `excluding`: a folder whose types are not the app's (the kit loom writes, whose previews declare a `Comment`).
+    init(root: URL, excluding: URL? = nil) {
         let skipped: Set<String> = [".build", ".git", ".swiftpm", "DerivedData", "node_modules", "Tests", "UITests"]
         guard let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.isDirectoryKey]) else { return }
         for case let url as URL in walker {
             let name = url.lastPathComponent
+            if let excluding, url.standardizedFileURL.path.hasPrefix(excluding.standardizedFileURL.path + "/") || url.standardizedFileURL.path == excluding.standardizedFileURL.path {
+                walker.skipDescendants(); continue
+            }
             // Only a folder is skipped: on a file, skipDescendants skips the folder entered last, which hid a whole
             // package from this reader (Margin, 2026-11-01).
             let isFolder = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false

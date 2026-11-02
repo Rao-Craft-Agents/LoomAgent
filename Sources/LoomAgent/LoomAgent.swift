@@ -156,7 +156,8 @@ public struct LoomAgent: GraniteAgentPackage {
         var imports = (input.imports ?? []).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         let files = AgentFiles(directory: input.directory)
         // Each path checked against the app's own types, in their spelling; a type a local package declares imported.
-        let app = AppTypes(root: files.root)
+        // The kit's own folder is not the app's: its previews declare stand-ins named Post and Comment (Margin, 2026-11-02).
+        let app = AppTypes(root: files.root, excluding: files.resolve(input.into ?? "Shared/Views/Social"))
         var typeNotes: [String] = []
         mappings = mappings.map { mapping in
             guard let declared = app.types[AppTypes.named(mapping.type)] else { return mapping }
