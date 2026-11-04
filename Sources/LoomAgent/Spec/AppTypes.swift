@@ -144,9 +144,12 @@ struct AppTypes {
                 let known = current.fields.map(\.name).joined(separator: ", ")
                 return (path, "`\(current.name)` has no `\(step)`" + (known.isEmpty ? "" : ": its fields are \(known)"))
             }
-            // A step through an optional reads on with `?.` (`author?.name` when author is `User?`, Margin 2026-11-01).
-            let throughOptional = optional.isEmpty && index < steps.count - 1 && (current.field(found) ?? "").trimmingCharacters(in: .whitespaces).hasSuffix("?")
-            out.append(found + (throughOptional ? "?" : optional))
+            // A step through an optional reads on with `?.` (`author?.name` when author is `User?`, Margin 2026-11-01);
+            // a `?` written on a step that is not optional is dropped, since Swift refuses it (`community?.name` when
+            // community is `Community`, Margin regime 2026-11-04).
+            let isOptional = (current.field(found) ?? "").trimmingCharacters(in: .whitespaces).hasSuffix("?")
+            let mark = optional.isEmpty ? (index < steps.count - 1 && isOptional ? "?" : "") : (isOptional ? "?" : "")
+            out.append(found + mark)
             guard let next = types[Self.named(current.field(found) ?? "")] else {
                 out += steps.dropFirst(index + 1)
                 break

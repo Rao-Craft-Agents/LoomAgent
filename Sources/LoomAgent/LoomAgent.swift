@@ -48,6 +48,13 @@ public struct LoomAgent: GraniteAgentPackage {
     public typealias Compute = Void
 
     public static let word = "loom"
+    /// What it makes: reusable views a page shows, and the conformances that make the app's types theirs.
+    public static let makes = [
+        AgentMake(kind: "view", what: "the social screens as reusable SwiftUI views (FeedView, PostPageView, CommentThreadView, ProfileView and the parts they are built from); a page shows them with FeedView(…), PostPageView(…), ProfileView(…)",
+                  into: ["Shared/Views/Social/*"], never: "routes; never a page, a service, a client or a model type"),
+        AgentMake(kind: "conformance", what: "the app's own types made the views' types: one extension a mapping line, and AppSocial naming one type a role",
+                  into: ["Shared/Views/Social/Conformances/*"], never: "a change to the app's types themselves"),
+    ]
     public static let summary = "writes a social app's UI as plain SwiftUI in Loom's look (feeds, post cards and pages, threaded comments, profiles, communities, compose, reply, search), made to show the app's own types from one mapping line a type."
     public static let fields = [
         "into": "the folder for the views, relative to the project; Shared/Views/Social when left out",
@@ -305,10 +312,26 @@ public struct LoomAgent: GraniteAgentPackage {
             notes.append("The colours are read from the asset catalog: colors/background, colors/alternateBackground, colors/secondaryBackground, colors/tertiaryBackground, colors/foreground and colors/secondaryForeground.")
         }
 
+        let existed = Set(planned.map(\.url.path).filter { FileManager.default.fileExists(atPath: $0) })
         let written = try files.write(planned)
         note("wrote \(written.count) files")
+        // What it was asked for: the views each screen is built from, and one conformance a mapping line. What it made:
+        // each of those whose file was written, `rewritten` when the file was there before.
+        func state(_ path: String) -> AgentMade.State { existed.contains(path) ? .rewritten : .written }
+        func file(_ name: String) -> String? { written.first { ($0 as NSString).lastPathComponent == name } }
+        let asked = screens.flatMap { KitCatalog.roots(of: $0) }.map { prefix + $0 }
+        var expected = asked.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }.map { AgentExpected(kind: "view", name: $0) }
+        expected += mappings.map { AgentExpected(kind: "conformance", name: $0.type) }
+        var made: [AgentMade] = views.map { prefix + $0 }.compactMap { view in
+            file(view + ".swift").map { AgentMade(kind: "view", name: view, path: $0, state: state($0)) }
+        }
+        made += mappings.compactMap { mapping in
+            file("\(mapping.fileStem)+\(mapping.role.name).swift").map { AgentMade(kind: "conformance", name: mapping.type, path: $0, state: state($0)) }
+        }
+        let partial = colorNote.map { [AgentProblem(kind: "fallback", text: $0)] } ?? []
         return LoomResult(path: written.first, paths: written, views: views.map { prefix + $0 },
-                          conformances: mappings.map { "\($0.type): \($0.role.rawValue)" }, schema: schema, notes: notes)
+                          conformances: mappings.map { "\($0.type): \($0.role.rawValue)" }, schema: schema, notes: notes,
+                          made: made, expected: expected, problems: partial)
     }
 }
 

@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+import GraniteAgents
 @testable import LoomAgent
 
 /// What the files say: the conformances the lines make, the parts the screens and features choose, the prefix, and
@@ -328,6 +329,35 @@ final class AppTypesTests: XCTestCase {
         XCTAssertNoThrow(try LoomAgent.write(LoomAgent.Input(mappings: ["post: Dish title=name created=createdAt score=replyCount author=cook.displayName"],
                                                              screens: [.feed], directory: folder.path), note: { _ in }, yield: { _ in }))
         XCTAssertEqual(AppTypes(root: folder).type(of: "cook.displayName", from: "Dish"), "String")
+    }
+
+    /// PIN: a `?` written on a step that is not optional is dropped, since Swift refuses it; on an optional step it
+    /// stays, and an optional step read through gains one (Margin regime, 2026-11-04: `community?.name`).
+    func testAQuestionMarkOnAStepThatIsNotOptionalIsDropped() throws {
+        let app = AppTypes(root: try kit())
+        XCTAssertEqual(app.check("cook?.displayName", from: "Dish").path, "cook.displayName", "cook is a Cook, never nil")
+        XCTAssertEqual(app.check("helper?.displayName", from: "Dish").path, "helper?.displayName", "helper is a Cook?")
+        XCTAssertEqual(app.check("helper.displayName", from: "Dish").path, "helper?.displayName")
+        XCTAssertEqual(app.check("name?", from: "Dish").path, "name")
+    }
+
+    /// The answer keeps `granite-answer/1`: the views each screen asked for and one conformance a line, held against
+    /// what was written; every refusal the call's to fix.
+    func testTheAnswerSaysWhatItMadeOfTheScreensAndLines() async throws {
+        let folder = try kit()
+        let input = try JSONSerialization.data(withJSONObject: ["mappings": ["post: Dish title=name"], "screens": ["feed"], "directory": folder.path])
+        let answer = try await AnyAgentPackage(LoomAgent.self).perform(input, host: AgentHost(directory: folder.path))
+        XCTAssertEqual((try JSONSerialization.jsonObject(with: answer) as? [String: Any])?["format"] as? String, AgentAnswerStandard.format)
+        let result = try JSONDecoder().decode(LoomResult.self, from: answer)
+        XCTAssertEqual(result.expected, ["FeedView", "FeedHeaderView", "FeedSplitView"].map { AgentExpected(kind: "view", name: $0) }
+                       + [AgentExpected(kind: "conformance", name: "Dish")])
+        let made = Set(result.made.map { AgentExpected(kind: $0.kind, name: $0.name) })
+        XCTAssertTrue(Set(result.expected).isSubset(of: made), "\(result.made)")
+        XCTAssertTrue(result.made.allSatisfy { $0.state == .written }, "a first call writes every file")
+        let again = try JSONDecoder().decode(LoomResult.self, from: try await AnyAgentPackage(LoomAgent.self).perform(input, host: AgentHost(directory: folder.path)))
+        XCTAssertTrue(again.made.allSatisfy { $0.state == .rewritten }, "a second call writes them again")
+        XCTAssertEqual(LoomError.problems(["a", "b"]).refusal, AgentRefusal(.call, ["a", "b"]))
+        XCTAssertEqual(Set(LoomAgent.makes.map(\.kind)), ["view", "conformance"])
     }
 
     func testAFieldTheTypeDoesNotHaveIsRefusedWithItsFields() throws {
