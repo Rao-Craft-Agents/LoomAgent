@@ -159,6 +159,21 @@ public struct LoomAgent: GraniteAgentPackage {
         // The kit's own folder is not the app's: its previews declare stand-ins named Post and Comment (Margin, 2026-11-02).
         let app = AppTypes(root: files.root, excluding: files.resolve(input.into ?? "Shared/Views/Social"))
         var typeNotes: [String] = []
+        // A property written as nothing is left out, so the protocol's default answers for it, as for any property a
+        // line leaves out: `nil` has no type to choose an overload by (Margin, 2026-11-03).
+        var nothing: [String] = []
+        mappings = mappings.map { mapping in
+            let kept = mapping.assignments.filter { assignment in
+                guard case .expression(let text) = assignment.source, assignment.property.kind.isNothing(text) else { return true }
+                nothing.append("\(assignment.property.key)=\(text.trimmingCharacters(in: .whitespaces))")
+                return false
+            }
+            return Mapping(line: mapping.line, role: mapping.role, type: mapping.type, id: mapping.id, assignments: kept)
+        }
+        if !nothing.isEmpty {
+            typeNotes.append("Left out \(nothing.prefix(6).joined(separator: ", "))\(nothing.count > 6 ? " and \(nothing.count - 6) more" : ""): "
+                + "a property a line leaves out shows its default, so a line needs only what the type has.")
+        }
         mappings = mappings.map { mapping in
             guard let declared = app.types[AppTypes.named(mapping.type)] else { return mapping }
             if let module = declared.module, !imports.contains(module), !mapping.type.hasPrefix(module + ".") {
@@ -181,6 +196,18 @@ public struct LoomAgent: GraniteAgentPackage {
                 guard case .path(let path) = source else { return source }
                 let (fixed, problem) = app.check(path, from: mapping.type)
                 if let problem { problems.append("\(mapping.role.rawValue) \(word)=\(path): \(problem)"); return source }
+                // A field of a type the conversion has no overload for: refused, with what it takes, before the build
+                // finds it. A type this reader does not know is taken as written (READ, NOT COMPILED).
+                if let kind, let written = app.type(of: fixed, from: mapping.type) {
+                    let base = written.hasSuffix("?") || written.hasSuffix("!") ? String(written.dropLast()) : written
+                    let known = SocialKind.integers.union(["String", "Substring", "URL", "Double", "Float", "Bool", "Date", "Duration", "UUID", "Decimal"])
+                    let declaredHere = app.types[AppTypes.named(base)] != nil && !base.hasPrefix("[")
+                    if !kind.takes.contains(base), !kind.takes.contains(written), declaredHere || known.contains(base) || (base.hasPrefix("[") && kind != .urls) {
+                        problems.append("\(mapping.role.rawValue) \(word)=\(path): `\(fixed)` is `\(written)`, and `\(word)` shows \(kind.takesInWords): "
+                            + "map a field of one of those, or leave `\(word)` out")
+                        return source
+                    }
+                }
                 if fixed != path { typeNotes.append("\(mapping.role.rawValue) \(word): `\(path)` is `\(fixed)` on \(declared.name).") }
                 // A list of the app's own values where links are wanted (`media` as `[MediaAttachment]`, Margin
                 // 2026-11-01): read each one's link, or say which field would be.

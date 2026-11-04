@@ -99,6 +99,19 @@ struct AppTypes {
         return [camel, initialisms].first { type.field($0) != nil }
     }
 
+    /// The type, as written, of the field a checked path ends on; nil past a type it does not know.
+    func type(of path: String, from type: String) -> String? {
+        guard var current = types[Self.named(type)] else { return nil }
+        let steps = path.components(separatedBy: ".").map { $0.hasSuffix("?") ? String($0.dropLast()) : $0 }
+        for (index, step) in steps.enumerated() {
+            guard let fieldType = current.field(step) else { return nil }
+            if index == steps.count - 1 { return fieldType.replacingOccurrences(of: " ", with: "") }
+            guard let next = types[Self.named(fieldType)] else { return nil }
+            current = next
+        }
+        return nil
+    }
+
     /// The element type of the list a path ends on, when it is one of the app's types: `MediaAttachment` for `media`.
     func listElement(of path: String, from type: String) -> String? {
         guard var current = types[Self.named(type)] else { return nil }

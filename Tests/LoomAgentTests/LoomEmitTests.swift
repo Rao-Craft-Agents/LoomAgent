@@ -296,6 +296,40 @@ final class AppTypesTests: XCTestCase {
         XCTAssertEqual(app.types["Dish"]?.module, "RecipeKit", "the package's Dish, not the kit's stand-in")
     }
 
+    /// PIN: a property written as nothing is left out, as if the line had not named it, and the default answers. A
+    /// line that filled every role with `nil`, `false`, `0` and `[]` wrote `SocialValue.flag(nil)`, which Swift cannot
+    /// choose an overload for, and the app stopped building (Margin, 2026-11-03).
+    func testAPropertyWrittenAsNothingIsLeftOut() throws {
+        let folder = try kit()
+        let input = LoomAgent.Input(mappings: ["post: Dish title=name edited=nil saved=false score=0 media=[] linkTitle=\"\" nsfw=true"],
+                                    screens: [.feed], directory: folder.path)
+        let result = try LoomAgent.write(input, note: { _ in }, yield: { _ in })
+        let conformance = try String(contentsOf: folder.appendingPathComponent("Shared/Views/Social/Conformances/Dish+Post.swift"), encoding: .utf8)
+        XCTAssertFalse(conformance.contains("(nil)"), conformance)
+        XCTAssertFalse(conformance.contains("(false)") || conformance.contains("(0)") || conformance.contains("([])"), conformance)
+        XCTAssertTrue(conformance.contains("SocialValue.flag(true)"), "a value that is not nothing stays: \(conformance)")
+        XCTAssertTrue(result.notes.contains { $0.hasPrefix("Left out edited=nil, saved=false, score=0, media=[], linkTitle=\"\":") }, "\(result.notes)")
+    }
+
+    /// PIN: a field of a type the property's conversion has no overload for is refused with what it takes, before a
+    /// build finds it: `edited=score` read an `Int` as a flag (Margin, 2026-11-03). A type the reader does not know
+    /// is taken as written.
+    func testAFieldOfATypeThePropertyCannotShowIsRefused() throws {
+        let folder = try kit()
+        for (line, refusal) in [
+            ("post: Dish title=name edited=replyCount", "post edited=replyCount: `replyCount` is `Int`, and `edited` shows a flag (a Bool, or a Date or String whose presence sets it): map a field of one of those, or leave `edited` out"),
+            ("post: Dish title=name author=cook", "post author=cook: `cook` is `Cook`, and `author` shows text (a String, a URL or a whole number)"),
+            ("post: Dish title=name score=photos", "post score=photos: `photos` is `[Photo]`, and `score` shows a whole number"),
+        ] {
+            XCTAssertThrowsError(try LoomAgent.write(LoomAgent.Input(mappings: [line], screens: [.feed], directory: folder.path), note: { _ in }, yield: { _ in }), line) { error in
+                XCTAssertTrue("\(error)".contains(refusal), "\(error)")
+            }
+        }
+        XCTAssertNoThrow(try LoomAgent.write(LoomAgent.Input(mappings: ["post: Dish title=name created=createdAt score=replyCount author=cook.displayName"],
+                                                             screens: [.feed], directory: folder.path), note: { _ in }, yield: { _ in }))
+        XCTAssertEqual(AppTypes(root: folder).type(of: "cook.displayName", from: "Dish"), "String")
+    }
+
     func testAFieldTheTypeDoesNotHaveIsRefusedWithItsFields() throws {
         let folder = try kit()
         let input = LoomAgent.Input(mappings: ["post: Dish title=name score=likes"], screens: [.feed], directory: folder.path)
