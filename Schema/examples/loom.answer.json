@@ -1,0 +1,290 @@
+{
+  "agent": {
+    "word": "loom"
+  },
+  "conformances": [
+    "Post: post",
+    "Comment: comment",
+    "User: user",
+    "Community: community"
+  ],
+  "expected": [
+    {
+      "kind": "view",
+      "name": "FeedView"
+    },
+    {
+      "kind": "view",
+      "name": "FeedHeaderView"
+    },
+    {
+      "kind": "view",
+      "name": "FeedSplitView"
+    },
+    {
+      "kind": "view",
+      "name": "PostCardView"
+    },
+    {
+      "kind": "view",
+      "name": "PostPageView"
+    },
+    {
+      "kind": "view",
+      "name": "CommentThreadView"
+    },
+    {
+      "kind": "view",
+      "name": "UserCardView"
+    },
+    {
+      "kind": "view",
+      "name": "UserProfileHeaderView"
+    },
+    {
+      "kind": "view",
+      "name": "ProfileView"
+    },
+    {
+      "kind": "conformance",
+      "name": "Post"
+    },
+    {
+      "kind": "conformance",
+      "name": "Comment"
+    },
+    {
+      "kind": "conformance",
+      "name": "User"
+    },
+    {
+      "kind": "conformance",
+      "name": "Community"
+    }
+  ],
+  "format": "granite-answer/1",
+  "made": [
+    {
+      "kind": "view",
+      "name": "AvatarView",
+      "path": "Shared/Views/Social/AvatarView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "BannerView",
+      "path": "Shared/Views/Social/BannerView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "CensorView",
+      "path": "Shared/Views/Social/CensorView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "MarkdownBodyView",
+      "path": "Shared/Views/Social/MarkdownBodyView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "LinkPreviewView",
+      "path": "Shared/Views/Social/LinkPreviewView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "MediaGalleryView",
+      "path": "Shared/Views/Social/MediaGalleryView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "ContentStateView",
+      "path": "Shared/Views/Social/ContentStateView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "ContentMenuView",
+      "path": "Shared/Views/Social/ContentMenuView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "ContentHeaderView",
+      "path": "Shared/Views/Social/ContentHeaderView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "ContentFooterView",
+      "path": "Shared/Views/Social/ContentFooterView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "PostCardView",
+      "path": "Shared/Views/Social/PostCardView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "CommentCardView",
+      "path": "Shared/Views/Social/CommentCardView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "CommentThreadView",
+      "path": "Shared/Views/Social/CommentThreadView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "PostPageView",
+      "path": "Shared/Views/Social/PostPageView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "FeedHeaderView",
+      "path": "Shared/Views/Social/FeedHeaderView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "FeedView",
+      "path": "Shared/Views/Social/FeedView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "FeedSplitView",
+      "path": "Shared/Views/Social/FeedSplitView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "UserCardView",
+      "path": "Shared/Views/Social/UserCardView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "UserProfileHeaderView",
+      "path": "Shared/Views/Social/UserProfileHeaderView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "ProfileView",
+      "path": "Shared/Views/Social/ProfileView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "view",
+      "name": "ReportView",
+      "path": "Shared/Views/Social/ReportView.swift",
+      "state": "written"
+    },
+    {
+      "kind": "conformance",
+      "name": "Post",
+      "path": "Shared/Views/Social/Conformances/Post+Post.swift",
+      "state": "written"
+    },
+    {
+      "kind": "conformance",
+      "name": "Comment",
+      "path": "Shared/Views/Social/Conformances/Comment+Comment.swift",
+      "state": "written"
+    },
+    {
+      "kind": "conformance",
+      "name": "User",
+      "path": "Shared/Views/Social/Conformances/User+User.swift",
+      "state": "written"
+    },
+    {
+      "kind": "conformance",
+      "name": "Community",
+      "path": "Shared/Views/Social/Conformances/Community+Community.swift",
+      "state": "written"
+    }
+  ],
+  "notes": [
+    "`Post` is declared in MarginKit, so the conformances import it.",
+    "AppSocial uses SocialNoInstance for the roles no line maps."
+  ],
+  "path": "Shared/Views/Social/SocialProtocols.swift",
+  "paths": [
+    "Shared/Views/Social/SocialProtocols.swift",
+    "Shared/Views/Social/SocialValue.swift",
+    "Shared/Views/Social/SocialFormat.swift",
+    "Shared/Views/Social/SocialContext.swift",
+    "Shared/Views/Social/SocialStyle.swift",
+    "Shared/Views/Social/SocialActions.swift",
+    "Shared/Views/Social/SocialPhase.swift",
+    "Shared/Views/Social/SocialMenu.swift",
+    "Shared/Views/Social/SocialThread.swift",
+    "Shared/Views/Social/SocialSwipe.swift",
+    "Shared/Views/Social/AvatarView.swift",
+    "Shared/Views/Social/BannerView.swift",
+    "Shared/Views/Social/CensorView.swift",
+    "Shared/Views/Social/MarkdownBodyView.swift",
+    "Shared/Views/Social/LinkPreviewView.swift",
+    "Shared/Views/Social/MediaGalleryView.swift",
+    "Shared/Views/Social/ContentStateView.swift",
+    "Shared/Views/Social/ContentMenuView.swift",
+    "Shared/Views/Social/ContentHeaderView.swift",
+    "Shared/Views/Social/ContentFooterView.swift",
+    "Shared/Views/Social/PostCardView.swift",
+    "Shared/Views/Social/CommentCardView.swift",
+    "Shared/Views/Social/CommentThreadView.swift",
+    "Shared/Views/Social/PostPageView.swift",
+    "Shared/Views/Social/FeedHeaderView.swift",
+    "Shared/Views/Social/FeedView.swift",
+    "Shared/Views/Social/FeedSplitView.swift",
+    "Shared/Views/Social/UserCardView.swift",
+    "Shared/Views/Social/UserProfileHeaderView.swift",
+    "Shared/Views/Social/ProfileView.swift",
+    "Shared/Views/Social/ReportView.swift",
+    "Shared/Views/Social/SocialPreviews.swift",
+    "Shared/Views/Social/Conformances/Post+Post.swift",
+    "Shared/Views/Social/Conformances/Comment+Comment.swift",
+    "Shared/Views/Social/Conformances/User+User.swift",
+    "Shared/Views/Social/Conformances/Community+Community.swift",
+    "Shared/Views/Social/Conformances/AppSocial.swift"
+  ],
+  "problems": [],
+  "schema": "AppSocial",
+  "views": [
+    "SocialMenuButton",
+    "AvatarView",
+    "BannerView",
+    "CensorView",
+    "MarkdownBodyView",
+    "LinkPreviewView",
+    "MediaGalleryView",
+    "MediaThumbnailView",
+    "ContentStateView",
+    "ContentMenuView",
+    "ContentMenuItems",
+    "ContentHeaderView",
+    "ContentFooterView",
+    "PostCardView",
+    "CommentCardView",
+    "CommentThreadView",
+    "PostPageView",
+    "FeedHeaderView",
+    "FeedView",
+    "FeedSplitView",
+    "UserCardView",
+    "UserProfileHeaderView",
+    "ProfileView",
+    "ReportView"
+  ]
+}

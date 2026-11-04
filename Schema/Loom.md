@@ -10,6 +10,7 @@ loom's own log.
 | --- | --- |
 | [`loom.input.schema.json`](loom.input.schema.json) | What it takes, as JSON Schema |
 | [`loom.answer.schema.json`](loom.answer.schema.json) | What it answers: `granite-answer/1` with its own kinds |
+| [`examples/loom.answer.json`](examples/loom.answer.json) | A real answer, from a regime run |
 
 ## What it takes
 
