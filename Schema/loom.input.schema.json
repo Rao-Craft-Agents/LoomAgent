@@ -1,0 +1,92 @@
+{
+  "$id" : "https://github.com/Rao-Craft-Agents/LoomAgent/blob/main/Schema/loom.input.schema.json",
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "description" : "Every field a call to loom may give; `directory` is Craft's, never the model's.",
+  "properties" : {
+    "colors" : {
+      "description" : "code (colours in code for light and dark, the default) or assets (read colors/background, colors/foreground and the other roles from the asset catalog)",
+      "enum" : [
+        "code",
+        "assets"
+      ],
+      "type" : "string"
+    },
+    "features" : {
+      "description" : "the parts to write, every one when left out: vote, save, share, reply, report, block, nsfwShield, markdown, linkPreview, media, swipeActions, editing",
+      "items" : {
+        "enum" : [
+          "vote",
+          "save",
+          "share",
+          "reply",
+          "report",
+          "block",
+          "nsfwShield",
+          "markdown",
+          "linkPreview",
+          "media",
+          "swipeActions",
+          "editing"
+        ],
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "imports" : {
+      "description" : "modules the conformances import, such as the package a mapped type is declared in",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "into" : {
+      "description" : "the folder for the views, relative to the project; Shared/Views/Social when left out",
+      "type" : "string"
+    },
+    "mappings" : {
+      "description" : "one line a role (post, comment, user, community, instance): `post: Dish title=name author=cook.name avatar=cook.photo score=likes comments=replyCount created=sharedAt`; a bare path is read off the value, anything else is Swift that may name `value`",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "prefix" : {
+      "description" : "a prefix for the view types when the app already has views of these names: `Kit` writes KitPostCardView",
+      "type" : "string"
+    },
+    "screens" : {
+      "description" : "the screens to write, every one when left out: feed, post, thread, compose, reply, profile, community, search, instances, filter, share",
+      "items" : {
+        "enum" : [
+          "feed",
+          "post",
+          "thread",
+          "compose",
+          "reply",
+          "profile",
+          "community",
+          "search",
+          "instances",
+          "filter",
+          "share"
+        ],
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "style" : {
+      "description" : "loom (Loom's look, the default), social (a timeline) or reader (compact rows with thumbnails and scores); all three are written, this is the one the views start in",
+      "enum" : [
+        "loom",
+        "social",
+        "reader"
+      ],
+      "type" : "string"
+    }
+  },
+  "required" : [
+
+  ],
+  "title" : "What loom takes (craft-agent/1)",
+  "type" : "object"
+}

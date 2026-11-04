@@ -1,0 +1,57 @@
+{
+  "$id" : "https://github.com/Rao-Craft-Agents/LoomAgent/blob/main/Schema/loom.answer.schema.json",
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "allOf" : [
+    {
+      "$ref" : "https://github.com/riteshpakala/Granite/blob/main/Schema/granite-agent-answer.schema.json"
+    }
+  ],
+  "description" : "A granite-answer/1 answer; what loom makes and expects is one of its own kinds.",
+  "properties" : {
+    "expected" : {
+      "items" : {
+        "properties" : {
+          "kind" : {
+            "enum" : [
+              "view",
+              "conformance"
+            ],
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "kind",
+          "name"
+        ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
+    "made" : {
+      "items" : {
+        "properties" : {
+          "kind" : {
+            "enum" : [
+              "view",
+              "conformance"
+            ],
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "kind",
+          "name"
+        ],
+        "type" : "object"
+      },
+      "type" : "array"
+    }
+  },
+  "title" : "What loom answers (granite-answer/1)"
+}
